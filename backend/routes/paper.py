@@ -69,21 +69,26 @@ def generate_ai_paper():
 
     subject = data.get("subject")
     topics = data.get("topics")
-    difficulty = data.get("difficulty")
+    sections = data.get("sections")
+    paper_type = data.get("paper_type", "MCQ+Subjective")
 
     if not subject:
         return jsonify({"success": False, "message": "Subject required"}), 400
-    if not topics:
-        return jsonify({"success": False, "message": "Topics required"}), 400
-    if not difficulty:
-        return jsonify({"success": False, "message": "Difficulty required"}), 400
+    if not topics or not isinstance(topics, list):
+        return jsonify({"success": False, "message": "Topics must be a list"}), 400
+    if not sections or not isinstance(sections, list):
+        return jsonify({"success": False, "message": "Sections must be a list"}), 400
 
-    paper = generate_ai_question_paper(
-        subject=subject,
-        topics=topics,
-        difficulty=difficulty
-    )
-    return jsonify({"success": True, "paper": paper})
+    try:
+        paper = generate_ai_question_paper(
+            subject=subject,
+            topics=topics,
+            sections=sections,
+            paper_type=paper_type
+        )
+        return jsonify({"success": True, "paper": paper})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 
 @paper_bp.route("/download-question-paper", methods=["POST"])

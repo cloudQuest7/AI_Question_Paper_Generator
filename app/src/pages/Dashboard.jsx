@@ -8,16 +8,29 @@ function Dashboard() {
 
   // Step 1 State
   const [setup, setSetup] = useState({
-    subject: '',
-    teacher: '',
-    syllabus: '',
-    totalMarks: ''
-  });
-
+  subject: '',
+  teacher: '',
+  department: '',
+  academicYear: '',
+  class: '',
+  div: '',
+  sem: '',
+  examType: '',
+  duration: '',
+  date: '',
+  notes: '',
+  syllabus: '',
+  totalMarks: '',
+  paperType: 'MCQ+Subjective'
+});
   // Step 2 State
   const [sections, setSections] = useState([
-    { id: 1, name: 'Section A', questions: 4, marksPerQ: 5, bloom: 'Remember/Understand', diff: 'Easy' }
-  ]);
+  { 
+    id: 1, name: 'Section A', questions: 4, marksPerQ: 5, 
+    bloom: 'Remember/Understand', diff: 'Easy', type: 'Subjective',
+    attemptType: 'Attempt All', attemptX: '', attemptY: ''
+  }
+]);
 
   const totalCalculated = sections.reduce((sum, sec) => sum + (sec.questions * sec.marksPerQ), 0);
   const totalExpected = parseInt(setup.totalMarks) || 0;
@@ -28,9 +41,23 @@ function Dashboard() {
   const [aiPaperData, setAiPaperData] = useState(null);
 
   const addSection = () => {
-    const nextLabel = String.fromCharCode(65 + sections.length);
-    setSections([...sections, { id: Date.now(), name: `Section ${nextLabel}`, questions: 1, marksPerQ: 10, bloom: 'Apply', diff: 'Medium' }]);
-  };
+  const nextLabel = String.fromCharCode(65 + sections.length);
+  const defaultType = setup.paperType === 'MCQ' ? 'MCQ'
+    : setup.paperType === 'Subjective' ? 'Subjective'
+    : 'Subjective';
+  setSections([...sections, {
+    id: Date.now(),
+    name: `Section ${nextLabel}`,
+    questions: 1,
+    marksPerQ: 10,
+    bloom: 'Apply/Analyze',
+    diff: 'Medium',
+    type: defaultType,
+    attemptType: 'Attempt All',
+    attemptX: '',
+    attemptY: ''
+  }]);
+};
 
   const updateSection = (id, field, value) => {
     setSections(sections.map(s => s.id === id ? { ...s, [field]: value } : s));
@@ -40,19 +67,35 @@ function Dashboard() {
     setSections(sections.filter(s => s.id !== id));
   };
 
+  const handlePaperTypeChange = (type) => {
+    setSetup({ ...setup, paperType: type });
+    if (type === 'MCQ') {
+      setSections(sections.map(s => ({ ...s, type: 'MCQ' })));
+    } else if (type === 'Subjective') {
+      setSections(sections.map(s => ({ ...s, type: 'Subjective' })));
+    }
+    // MCQ+Subjective: teacher decides per section
+  };
+
   const handleGenerate = async () => {
     if (!isValid) return;
-    setStep(3); // Loading state
+    setStep(3);
     setIsGenerating(true);
+
+    const topics = setup.syllabus
+      .split('\n')
+      .map(s => s.trim())
+      .filter(s => s !== '');
 
     try {
       const response = await fetch('http://localhost:5000/generate-ai-paper', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subject: setup.subject || 'Natural Language Processing',
-          topics: setup.syllabus.split('\n').filter(s => s.trim() !== '') || ['Word Embeddings', 'Pragmatics'],
-          difficulty: sections[0]?.diff || 'Medium'
+          subject: setup.subject,
+          topics: topics.length > 0 ? topics : [setup.subject],
+          sections: sections,
+          paper_type: setup.paperType
         })
       });
 
@@ -63,32 +106,37 @@ function Dashboard() {
       }
 
       setIsGenerating(false);
-      setStep(4); // Preview State
+      setStep(4);
     } catch (error) {
       console.error(error);
       setIsGenerating(false);
       alert("Backend connection failed! Is port 5000 running?");
-      setStep(4); // Go to preview anyway so UI doesn't completely block
+      setStep(4);
     }
   };
 
   const handleDownload = async () => {
+    if (!aiPaperData) {
+      alert('No paper generated yet.');
+      return;
+    }
+
     try {
       const response = await fetch('http://localhost:5000/download-question-paper', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          subject: setup.subject || 'Natural Language Processing',
-          topics: setup.syllabus ? setup.syllabus.split('\n') : ['Word Embeddings', 'Word2Vec'],
-          difficulty: 'Medium',
-          blooms_level: 'Apply',
-          total_marks: parseInt(setup.totalMarks) || 60
+          subject: setup.subject,
+          total_marks: parseInt(setup.totalMarks) || 60,
+          teacher: setup.teacher || 'N/A',
+          date: new Date().toLocaleDateString('en-GB'),
+          paper_data: aiPaperData,
+          paper_type: setup.paperType
         })
       });
 
       if (!response.ok) throw new Error('Download failed');
 
-      // Handle the PDF blob
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
@@ -103,7 +151,37 @@ function Dashboard() {
     }
   };
 
+  const handleDownloadAnswerKey = async () => {
+    if (!aiPaperData) {
+      alert('No paper generated yet.');
+      return;
+    }
 
+    try {
+      const response = await fetch('http://localhost:5000/download-answer-key', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: setup.subject,
+          paper: aiPaperData
+        })
+      });
+
+      if (!response.ok) throw new Error('Download failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'answer_key.pdf';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (e) {
+      console.error(e);
+      alert('Failed to generate answer key.');
+    }
+  };
 
   return (
     <div className="dashboard-layout">
@@ -133,41 +211,173 @@ function Dashboard() {
       {/* Main Area */}
       <main className="dashboard-main">
         {step === 1 && (
-          <div className="dashboard-container">
-            <div className="form-header">
-              <h2>Paper Setup</h2>
-              <p>Define the core parameters for the examination.</p>
-            </div>
+  <div className="dashboard-container">
+    <div className="form-header">
+      <h2>Paper Setup</h2>
+      <p>Define the core parameters for the examination.</p>
+    </div>
 
-            <div className="form-grid">
-              <div className="input-group">
-                <label>Subject Name</label>
-                <input type="text" className="glass-input" placeholder="e.g. Natural Language Processing" value={setup.subject} onChange={e => setSetup({ ...setup, subject: e.target.value })} />
-              </div>
+    <div className="form-grid">
 
-              <div className="form-row">
-                <div className="input-group">
-                  <label>Teacher Name (Optional)</label>
-                  <input type="text" className="glass-input" placeholder="e.g. Dr. Jane Smith" value={setup.teacher} onChange={e => setSetup({ ...setup, teacher: e.target.value })} />
-                </div>
-                <div className="input-group">
-                  <label>Total Marks Target</label>
-                  <input type="number" className="glass-input" placeholder="e.g. 60" value={setup.totalMarks} onChange={e => setSetup({ ...setup, totalMarks: e.target.value })} />
-                </div>
-              </div>
+      {/* College Info */}
+      <div className="input-group">
+        <label>Department</label>
+        <input type="text" className="glass-input"
+          placeholder="e.g. Department of Computer Engineering"
+          value={setup.department}
+          onChange={e => setSetup({ ...setup, department: e.target.value })}
+        />
+      </div>
 
-              <div className="input-group">
-                <label>Syllabus / Topics to Cover</label>
-                <textarea className="glass-input" placeholder="Paste chapters, modules, or bullet points here..." value={setup.syllabus} onChange={e => setSetup({ ...setup, syllabus: e.target.value })} />
-              </div>
-            </div>
+      <div className="form-row">
+        <div className="input-group">
+          <label>Subject Name</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. Database Management System"
+            value={setup.subject}
+            onChange={e => setSetup({ ...setup, subject: e.target.value })}
+          />
+        </div>
+        <div className="input-group">
+          <label>Faculty Name</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. Prof. Manasi Kulkarni"
+            value={setup.teacher}
+            onChange={e => setSetup({ ...setup, teacher: e.target.value })}
+          />
+        </div>
+      </div>
 
-            <div className="action-bar">
-              <div></div>
-              <button className="btn-primary" onClick={() => setStep(2)}>Next: Section Builder →</button>
-            </div>
-          </div>
-        )}
+      <div className="form-row">
+        <div className="input-group">
+          <label>Academic Year</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. 2024-25"
+            value={setup.academicYear}
+            onChange={e => setSetup({ ...setup, academicYear: e.target.value })}
+          />
+        </div>
+        <div className="input-group">
+          <label>Class</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. SY"
+            value={setup.class}
+            onChange={e => setSetup({ ...setup, class: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="input-group">
+          <label>Division</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. ALL"
+            value={setup.div}
+            onChange={e => setSetup({ ...setup, div: e.target.value })}
+          />
+        </div>
+        <div className="input-group">
+          <label>Semester</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. III"
+            value={setup.sem}
+            onChange={e => setSetup({ ...setup, sem: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="input-group">
+          <label>Exam Type</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. Class Test I / Mid Sem / End Sem"
+            value={setup.examType}
+            onChange={e => setSetup({ ...setup, examType: e.target.value })}
+          />
+        </div>
+        <div className="input-group">
+          <label>Duration</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. 1.5 Hours"
+            value={setup.duration}
+            onChange={e => setSetup({ ...setup, duration: e.target.value })}
+          />
+        </div>
+      </div>
+
+      <div className="form-row">
+        <div className="input-group">
+          <label>Date</label>
+          <input type="text" className="glass-input"
+            placeholder="e.g. 26th August 2024"
+            value={setup.date}
+            onChange={e => setSetup({ ...setup, date: e.target.value })}
+          />
+        </div>
+        <div className="input-group">
+          <label>Total Marks</label>
+          <input type="number" className="glass-input"
+            placeholder="e.g. 40"
+            value={setup.totalMarks}
+            onChange={e => setSetup({ ...setup, totalMarks: e.target.value })}
+          />
+        </div>
+      </div>
+
+      {/* Paper Type Selector */}
+      <div className="input-group">
+        <label>Type of Paper</label>
+        <div className="paper-type-selector">
+          {['MCQ', 'Subjective', 'MCQ+Subjective'].map(type => (
+            <button
+              key={type}
+              className={`paper-type-btn ${setup.paperType === type ? 'active' : ''}`}
+              onClick={() => handlePaperTypeChange(type)}
+              type="button"
+            >
+              {type === 'MCQ' && '🔘 MCQ Only'}
+              {type === 'Subjective' && '📝 Subjective Only'}
+              {type === 'MCQ+Subjective' && '⚡ MCQ + Subjective'}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Notes */}
+      <div className="input-group">
+        <label>Notes / Instructions</label>
+        <textarea className="glass-input"
+          placeholder={"e.g.\nQ1 is compulsory.\nAttempt any 2 from the remaining 3 questions.\nAssume suitable data wherever necessary."}
+          value={setup.notes}
+          onChange={e => setSetup({ ...setup, notes: e.target.value })}
+        />
+      </div>
+
+      {/* Syllabus */}
+      <div className="input-group">
+        <label>Syllabus / Topics to Cover</label>
+        <textarea className="glass-input"
+          placeholder="Enter each topic on a new line..."
+          value={setup.syllabus}
+          onChange={e => setSetup({ ...setup, syllabus: e.target.value })}
+        />
+      </div>
+
+    </div>
+
+    <div className="action-bar">
+      <div></div>
+      <button
+        className="btn-primary"
+        onClick={() => setStep(2)}
+        disabled={!setup.subject || !setup.totalMarks}
+        style={{ opacity: setup.subject && setup.totalMarks ? 1 : 0.5 }}
+      >
+        Next: Section Builder →
+      </button>
+    </div>
+  </div>
+)}
 
         {step === 2 && (
           <div className="dashboard-container">
@@ -217,6 +427,64 @@ function Dashboard() {
                         </select>
                       </div>
                     </div>
+
+                    {/* Attempt Instruction */}
+<div className="input-group">
+  <label>Attempt Instruction</label>
+  <div className="paper-type-selector">
+    {['Attempt All', 'Attempt Any'].map(type => (
+      <button
+        key={type}
+        className={`paper-type-btn ${sec.attemptType === type ? 'active' : ''}`}
+        onClick={() => updateSection(sec.id, 'attemptType', type)}
+        type="button"
+      >
+        {type}
+      </button>
+    ))}
+  </div>
+</div>
+
+{/* Show X out of Y inputs only if Attempt Any */}
+{sec.attemptType === 'Attempt Any' && (
+  <div className="form-row">
+    <div className="input-group">
+      <label>Attempt Any (X)</label>
+      <input type="number" className="glass-input"
+        placeholder="e.g. 3"
+        value={sec.attemptX || ''}
+        onChange={e => updateSection(sec.id, 'attemptX', e.target.value)}
+      />
+    </div>
+    <div className="input-group">
+      <label>Out of (Y)</label>
+      <input type="number" className="glass-input"
+        placeholder="e.g. 4"
+        value={sec.attemptY || ''}
+        onChange={e => updateSection(sec.id, 'attemptY', e.target.value)}
+      />
+    </div>
+  </div>
+)}
+
+                    {/* Section Type — only show if MCQ+Subjective — NEW */}
+                    {setup.paperType === 'MCQ+Subjective' && (
+                      <div className="input-group">
+                        <label>Section Type</label>
+                        <div className="paper-type-selector">
+                          {['MCQ', 'Subjective'].map(type => (
+                            <button
+                              key={type}
+                              className={`paper-type-btn ${sec.type === type ? 'active' : ''}`}
+                              onClick={() => updateSection(sec.id, 'type', type)}
+                              type="button"
+                            >
+                              {type === 'MCQ' ? '🔘 MCQ' : '📝 Subjective'}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -247,14 +515,16 @@ function Dashboard() {
               <div className="pulse-ring">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83" strokeLinecap="round" strokeLinejoin="round" /></svg>
               </div>
-              <h2 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>AI is mapping syllabus to Bloom's taxonomy...</h2>
+              <h2 style={{ fontSize: '1.5rem', marginBottom: '8px' }}>
+                AI is generating your {setup.paperType} paper...
+              </h2>
               <p style={{ color: '#737373' }}>Synthesizing the perfect balanced paper. Please wait.</p>
             </div>
           </div>
         )}
 
         {step === 4 && (
-          <PreviewStep setup={setup} aiPaperData={aiPaperData} setStep={setStep} />
+          <PreviewStep setup={setup} sections={sections} aiPaperData={aiPaperData} setStep={setStep} />
         )}
 
         {step === 5 && (
@@ -277,7 +547,7 @@ function Dashboard() {
                 <div style={{ fontSize: '32px', marginBottom: '16px' }}>✅</div>
                 <h3 style={{ fontWeight: 700, marginBottom: '8px' }}>Answer Key & Rubrics</h3>
                 <p style={{ color: '#737373', fontSize: '0.875rem', marginBottom: '24px' }}>Hidden from students, step-wise grading.</p>
-                <button className="btn-primary" style={{ width: '100%', background: '#a855f7' }}>Download Rubric</button>
+                <button className="btn-primary" style={{ width: '100%', background: '#a855f7' }} onClick={handleDownloadAnswerKey}>Download Rubric</button>
               </div>
             </div>
           </div>

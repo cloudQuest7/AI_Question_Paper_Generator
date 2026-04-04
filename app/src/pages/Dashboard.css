@@ -359,3 +359,32 @@ textarea.glass-input {
 .chat-bubble.ai { background: rgba(59, 130, 246, 0.1); color: #1e3a8a; align-self: flex-start; border-bottom-left-radius: 4px; }
 .chat-bubble.user { background: #0a0a0a; color: #fff; align-self: flex-end; border-bottom-right-radius: 4px; }
 
+/* Paper Type Selector */
+.paper-type-selector {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.paper-type-btn {
+  padding: 10px 20px;
+  border-radius: 12px;
+  border: 2px solid rgba(0,0,0,0.1);
+  background: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #525252;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.paper-type-btn:hover {
+  border-color: #a855f7;
+  color: #a855f7;
+}
+
+.paper-type-btn.active {
+  border-color: #a855f7;
+  background: rgba(168, 85, 247, 0.08);
+  color: #a855f7;
+}
