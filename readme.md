@@ -2,12 +2,12 @@
 ## Setup Instructions
 
 ### Frontend Setup
-1. Navigate to the frontend directory:
-    ```bash
-    cd frontend
+1. Navigate to the app directory:
+
+    cd app
     ```
 2. Install dependencies and start the dev server:
-    ```bash
+    
     npm install
     npm run dev
     ```
