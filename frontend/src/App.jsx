@@ -1,7 +1,9 @@
 import { useState } from "react";
 import "./App.css";
+import Landing from "./pages/Landing";
 
 function App() {
+  const [currentPage, setCurrentPage] = useState("landing");
   const [loading, setLoading] = useState("");
   const [subject, setSubject] = useState("Database Management System");
   const [topics, setTopics] = useState("DBMS Basics, ER Model, Normalization, SQL, Transactions");
@@ -100,6 +102,7 @@ function App() {
   };
 
   return (
+    currentPage === "landing" ? <Landing /> : 
     <div className="app-container">
       <div className="pdf-card">
         <h1>AI Question Paper Generator</h1>
