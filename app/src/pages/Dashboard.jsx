@@ -1,9 +1,13 @@
 import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { logoutUser } from '../config/authUtils';
 import PreviewStep from '../components/dashboard/PreviewStep';
 import './Dashboard.css';
 
 function Dashboard() {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [step, setStep] = useState(1);
 
   // Step 1 State
@@ -217,12 +221,31 @@ const handleDownloadAnswerKey = async () => {
         </div>
 
         <div className="sidebar-footer">
-          <button className="logout-btn" onClick={() => window.location.href = '/login'}>
+          <button className="logout-btn" onClick={async () => {
+            const result = await logoutUser();
+            if (result.success) {
+              navigate('/login');
+            }
+          }}>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
             </svg>
             Log out
           </button>
+          {user && (
+            <div style={{
+              fontSize: '0.75rem',
+              color: '#737373',
+              marginTop: '12px',
+              paddingTop: '12px',
+              borderTop: '1px solid rgba(0,0,0,0.1)',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis'
+            }}>
+              {user.email}
+            </div>
+          )}
         </div>
       </aside>
 
