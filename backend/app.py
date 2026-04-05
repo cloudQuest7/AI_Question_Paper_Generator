@@ -12,7 +12,7 @@ app = Flask(__name__)
 # Configure CORS for all origins and all routes
 CORS(app, 
      resources={
-         r"/api/*": {
+         r"/*": {
              "origins": "*",
              "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
              "allow_headers": ["Content-Type", "Authorization"]
@@ -43,4 +43,4 @@ def handle_generic_error(e):
 
 if __name__ == "__main__":
     debug_mode = os.getenv("FLASK_DEBUG", "false").lower() == "true"
-    app.run(debug=debug_mode)
+    app.run(host="localhost", port=5000, debug=debug_mode)
