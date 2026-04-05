@@ -96,30 +96,34 @@ def download_question_paper():
     data = request.get_json()
 
     subject = data.get("subject")
-    topics = data.get("topics")
-    difficulty = data.get("difficulty", "Medium")
-    blooms_level = data.get("blooms_level", "Understand")
     total_marks = data.get("total_marks", 70)
     teacher = data.get("teacher", "N/A")
-    date = data.get("date", "TBD")
+    date = data.get("date", "")
+    paper_data = data.get("paper_data", {})
+    sections = data.get("sections", [])
 
     if not subject:
         return jsonify({"success": False, "message": "Subject required"}), 400
-    paper_data = data.get("paper_data", {})
-    mcqs = paper_data.get("Section A", [])
-    section_b = paper_data.get("Section B", [])
-    section_c = paper_data.get("Section C", [])
 
     try:
-
         pdf_buffer = build_question_paper_pdf(
             subject=subject,
             total_marks=total_marks,
             teacher=teacher,
             date=date,
-            section_a_mcqs=mcqs,
-            section_b_questions=section_b,
-            section_c_questions=section_c
+            section_a_mcqs=[],
+            section_b_questions=[],
+            section_c_questions=[],
+            department=data.get("department", "Department of Computer Engineering"),
+            academic_year=data.get("academic_year", ""),
+            class_name=data.get("class_name", ""),
+            div=data.get("div", ""),
+            sem=data.get("sem", ""),
+            exam_type=data.get("exam_type", ""),
+            duration=data.get("duration", ""),
+            notes=data.get("notes", ""),
+            sections=sections,
+            paper_data=paper_data
         )
 
         return send_file(

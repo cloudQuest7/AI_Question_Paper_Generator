@@ -116,72 +116,79 @@ function Dashboard() {
   };
 
   const handleDownload = async () => {
-    if (!aiPaperData) {
-      alert('No paper generated yet.');
-      return;
-    }
+  if (!aiPaperData) { alert('No paper generated yet.'); return; }
+  try {
+    const response = await fetch('http://localhost:5000/download-question-paper', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject: setup.subject,
+        total_marks: parseInt(setup.totalMarks) || 60,
+        teacher: setup.teacher || 'N/A',
+        date: setup.date || new Date().toLocaleDateString('en-GB'),
+        department: setup.department || '',
+        academic_year: setup.academicYear || '',
+        class_name: setup.class || '',
+        div: setup.div || '',
+        sem: setup.sem || '',
+        exam_type: setup.examType || '',
+        duration: setup.duration || '',
+        notes: setup.notes || '',
+        paper_data: aiPaperData,
+        sections: sections
+      })
+    });
+    if (!response.ok) throw new Error('Download failed');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'question_paper.pdf';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error(e);
+    alert('Failed to generate PDF.');
+  }
+};
 
-    try {
-      const response = await fetch('http://localhost:5000/download-question-paper', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: setup.subject,
-          total_marks: parseInt(setup.totalMarks) || 60,
-          teacher: setup.teacher || 'N/A',
-          date: new Date().toLocaleDateString('en-GB'),
-          paper_data: aiPaperData,
-          paper_type: setup.paperType
-        })
-      });
-
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'question_paper.pdf';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
-      alert('Failed to generate PDF. Check backend console.');
-    }
-  };
-
-  const handleDownloadAnswerKey = async () => {
-    if (!aiPaperData) {
-      alert('No paper generated yet.');
-      return;
-    }
-
-    try {
-      const response = await fetch('http://localhost:5000/download-answer-key', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          subject: setup.subject,
-          paper: aiPaperData
-        })
-      });
-
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'answer_key.pdf';
-      document.body.appendChild(a);
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (e) {
-      console.error(e);
-      alert('Failed to generate answer key.');
-    }
-  };
+const handleDownloadAnswerKey = async () => {
+  if (!aiPaperData) { alert('No paper generated yet.'); return; }
+  try {
+    const response = await fetch('http://localhost:5000/download-answer-key', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        subject: setup.subject,
+        paper: aiPaperData,
+        teacher: setup.teacher || '',
+        date: setup.date || '',
+        department: setup.department || '',
+        academic_year: setup.academicYear || '',
+        class_name: setup.class || '',
+        div: setup.div || '',
+        sem: setup.sem || '',
+        exam_type: setup.examType || '',
+        duration: setup.duration || '',
+        notes: setup.notes || '',
+        total_marks: setup.totalMarks || ''
+      })
+    });
+    if (!response.ok) throw new Error('Download failed');
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'answer_key.pdf';
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error(e);
+    alert('Failed to generate answer key.');
+  }
+};
 
   return (
     <div className="dashboard-layout">
