@@ -195,9 +195,11 @@ const handleDownloadAnswerKey = async () => {
       {/* Sidebar Progress */}
       <aside className="dashboard-sidebar">
         <div className="sidebar-logo">
-          <div className="logo-icon" style={{ width: 24, height: 24, fontSize: 10 }}>Q</div>
+          <div className="logo-icon" style={{ width: 28, height: 28 }}>Q</div>
           QPG Flow
         </div>
+
+        <div className="sidebar-section-label">Progress</div>
 
         <div className="stepper">
           {[
@@ -212,6 +214,15 @@ const handleDownloadAnswerKey = async () => {
               <span>{s.label}</span>
             </div>
           ))}
+        </div>
+
+        <div className="sidebar-footer">
+          <button className="logout-btn" onClick={() => window.location.href = '/login'}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1" />
+            </svg>
+            Log out
+          </button>
         </div>
       </aside>
 
@@ -535,27 +546,108 @@ const handleDownloadAnswerKey = async () => {
         )}
 
         {step === 5 && (
-          <div className="dashboard-container text-center">
-            <div className="pulse-ring" style={{ margin: '0 auto 32px', background: 'rgba(16, 185, 129, 0.1)' }}>
-              <svg viewBox="0 0 24 24" fill="none" stroke="#10b981" strokeWidth="2"><path d="M20 6L9 17l-5-5" strokeLinecap="round" strokeLinejoin="round" /></svg>
+          <div className="export-page">
+            {/* Success Badge */}
+            <div className="export-success-badge">
+              <div className="export-check-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <div>
+                <div className="export-badge-title">Ready to Export</div>
+                <div className="export-badge-sub">Your question paper has been generated successfully</div>
+              </div>
             </div>
-            <h2 style={{ fontSize: '2rem', fontWeight: 800, marginBottom: '16px', color: '#0a0a0a' }}>Paper Generation Complete</h2>
-            <p style={{ color: '#525252', fontSize: '1.125rem', marginBottom: '48px' }}>Your academically balanced paper and corresponding grading rubric are ready.</p>
 
-            <div className="form-row">
-              <div className="section-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
-                <div style={{ fontSize: '32px', marginBottom: '16px' }}>📄</div>
-                <h3 style={{ fontWeight: 700, marginBottom: '8px' }}>Question Paper</h3>
-                <p style={{ color: '#737373', fontSize: '0.875rem', marginBottom: '24px' }}>Standardized format ready for print.</p>
-                <button className="btn-primary" style={{ width: '100%' }} onClick={handleDownload}>Download PDF</button>
+            {/* Paper Metadata Strip */}
+            <div className="export-meta-strip">
+              {setup.subject && <div className="export-meta-chip"><span>Subject</span>{setup.subject}</div>}
+              {setup.examType && <div className="export-meta-chip"><span>Type</span>{setup.examType}</div>}
+              {setup.totalMarks && <div className="export-meta-chip"><span>Marks</span>{setup.totalMarks}</div>}
+              {setup.duration && <div className="export-meta-chip"><span>Duration</span>{setup.duration}</div>}
+              <div className="export-meta-chip"><span>Sections</span>{sections.length}</div>
+            </div>
+
+            {/* Download Cards */}
+            <div className="export-cards-grid">
+
+              {/* Question Paper Card */}
+              <div className="export-card">
+                <div className="export-card-icon export-card-icon--paper">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+                  </svg>
+                </div>
+                <div className="export-card-body">
+                  <h3>Question Paper</h3>
+                  <p>Print-ready PDF formatted to university standards. Includes all sections, Bloom's taxonomy levels, and attempt instructions.</p>
+                  <ul className="export-card-features">
+                    <li>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Academic header with college branding
+                    </li>
+                    <li>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Marks & BT level per question
+                    </li>
+                    <li>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Formatted for A4 print
+                    </li>
+                  </ul>
+                </div>
+                <button className="export-download-btn export-download-btn--primary" onClick={handleDownload}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Question Paper
+                </button>
               </div>
 
-              <div className="section-card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', background: '#fafafa' }}>
-                <div style={{ fontSize: '32px', marginBottom: '16px' }}>✅</div>
-                <h3 style={{ fontWeight: 700, marginBottom: '8px' }}>Answer Key & Rubrics</h3>
-                <p style={{ color: '#737373', fontSize: '0.875rem', marginBottom: '24px' }}>Hidden from students, step-wise grading.</p>
-                <button className="btn-primary" style={{ width: '100%', background: '#a855f7' }} onClick={handleDownloadAnswerKey}>Download Rubric</button>
+              {/* Answer Key Card */}
+              <div className="export-card">
+                <div className="export-card-icon export-card-icon--key">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 5.25a3 3 0 013 3m3 0a6 6 0 01-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1121.75 8.25z" />
+                  </svg>
+                </div>
+                <div className="export-card-body">
+                  <h3>Answer Key & Rubric</h3>
+                  <p>Detailed marking scheme with model answers and step-wise grading rubric. Strictly for faculty use only.</p>
+                  <ul className="export-card-features">
+                    <li>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Model answers for all questions
+                    </li>
+                    <li>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Step-wise marking breakdown
+                    </li>
+                    <li>
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" /></svg>
+                      Faculty-only confidential doc
+                    </li>
+                  </ul>
+                </div>
+                <button className="export-download-btn export-download-btn--secondary" onClick={handleDownloadAnswerKey}>
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                  </svg>
+                  Download Answer Key
+                </button>
               </div>
+
+            </div>
+
+            {/* Footer Actions */}
+            <div className="export-footer-actions">
+              <button className="export-restart-btn" onClick={() => { setStep(1); }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                Create another paper
+              </button>
             </div>
           </div>
         )}
