@@ -1,6 +1,5 @@
 flask
 flask-cors
-mysql-connector-python
 reportlab
 groq
 python-dotenv
