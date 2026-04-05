@@ -5,3 +5,5 @@ reportlab
 groq
 python-dotenv
 gunicorn
+supabase
+requests
